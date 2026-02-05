@@ -1,94 +1,133 @@
-import authService from "../services/auth.service";
+import authService from "../services/auth.service.js";
 
 class AuthController {
-  async createUser(req, res, next) {
-    const { name, email, password, role } = req.body;
+  createUser = async (req, res, next) => {
     try {
-      if (![name, email, password, role].every(Boolean)) {
-        return res.status(400).json({ message: "All fields are required" });
-      }
+      const user = await authService.createUser(req.body);
 
-      const UserData = await authService.createUser({
-        name,
-        email,
-        password,
-        role,
-      });
-
-      res.status(201).json({ success: true, data: UserData });
-    } catch (error) {
-      next(error);
-    }
-  }
-  async signIn(req, res, next) {
-    const { email, password } = req.body;
-    try {
-      if (!email || !password) {
-        return res
-          .status(401)
-          .json({ message: "Email and password are required" });
-      }
-      const loginUser = await authService.login({
-        email,
-        password,
-      });
-
-      res.status(200).json({
+      return res.status(201).json({
         success: true,
-        message: "Login successfully",
-        data: loginUser,
+        message: "User created successfully",
+        data: user,
       });
     } catch (error) {
       next(error);
     }
-  }
-  async getMyProfile(req, res, next) {
+  };
+
+  signIn = async (req, res, next) => {
+    try {
+      const result = await authService.login(req.body);
+
+      return res.status(200).json({
+        success: true,
+        message: "Login successful",
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getMyProfile = async (req, res, next) => {
     const userId = req.user?.userId;
     try {
       if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
       }
+      const profile = await authService.getProfile(userId);
 
-      const userProfile = await authService.getProfile(userId);
-
-      return res.status(201).json({
+      return res.status(200).json({
         success: true,
         message: "Profile fetched successfully",
-        userProfile,
+        profile,
       });
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async getAllProfiles(req, res, next) {
-    const { page = 1, limit = 1 } = req.query;
+  getAllProfiles = async (req, res, next) => {
     try {
-      const result = await authService.getAllUser(page, limit);
-      return res
-        .status(200)
-        .json({ message: "Users fetched successfully", data: result });
+      const { page = 1, limit = 10 } = req.query;
+
+      const users = await authService.getAllUser(page, limit);
+
+      return res.status(200).json({
+        success: true,
+        message: "Users fetched successfully",
+        data: users,
+      });
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async signOut(req, res, next) {
+  deleteUser = async (req, res, next) => {
     const userId = req.user?.userId;
     try {
       if (!userId) {
-        res
-          .status(401)
-          .json({ success: false, message: "Unauthorized: user not found" });
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
       }
-      await authService.logOut(userId);
+      await authService.deleteUser(userId);
 
-      return res.status(201).json({
+      return res.status(200).json({
         success: true,
-        message: "user logOut successfully",
+        message: "User deleted successfully",
       });
     } catch (error) {
       next(error);
     }
-  }
+  };
+
+  updateProfile = async (req, res, next) => {
+    const userId = req.user?.id;
+    const { name } = req.body;
+    try {
+      if (!name) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Name is required" });
+      }
+      const profileId = await authService.updateProfile(userId, name);
+      if (!profileId) {
+        return res.status(401).json({ success: false, message: "" });
+      }
+
+      return res
+        .status(200)
+        .json({ success: true, message: "user updated successfully" });
+    } catch (error) {
+      next(error);
+    }
+  };
+  signOut = async (req, res, next) => {
+    const logOutId = req.user?.userId;
+
+    try {
+      if (!logOutId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      await authService.logOut(logOutId);
+
+      return res.status(200).json({
+        success: true,
+        message: "Logout successful",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
+
+export default new AuthController();

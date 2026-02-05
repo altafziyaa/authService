@@ -1,6 +1,6 @@
-export default {
-  accessSecret: process.env.JWT_ACCESS_SECRET,
-  refreshSecret: process.env.JWT_REFRESH_SECRET,
-  accessExpiry: "15m",
-  refreshExpiry: "7d",
+export const jwtConfig = {
+  accessSecret: process.env.ACCESS_TOKEN_SECRET,
+  refreshSecret: process.env.REFRESH_TOKEN_SECRET,
+  accessExpiry: process.env.ACCESS_TOKEN_EXPIRY, // "15m"
+  refreshExpiry: process.env.REFRESH_TOKEN_EXPIRY, // "7d"
 };
